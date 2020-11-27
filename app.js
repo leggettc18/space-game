@@ -127,6 +127,7 @@ const Messages = {
 	KEY_UP_LEFT: 'KEY_UP_LEFT',
 	KEY_UP_RIGHT: 'KEY_UP_RIGHT',
 	KEY_UP_SPACE: 'KEY_UP_SPACE',
+	KEY_UP_ENTER: 'KEY_UP_ENTER',
 	COLLISION_ENEMY_LASER: 'COLLISION_ENEMY_LASER',
 	COLLISION_ENEMY_HERO: 'COLLISION_ENEMY_HERO',
 	GAME_END_WIN: 'GAME_END_WIN',
@@ -172,8 +173,6 @@ let onKeyDown = function (e) {
 		eventEmitter.emit(Messages.KEY_DOWN_RIGHT);
 	} else if (e.code === 'Space') {
 		eventEmitter.emit(Messages.KEY_DOWN_SPACE);
-	} else if (e.key === 'Enter') {
-		eventEmitter.emit(Messages.KEY_DOWN_ENTER);
 	}
 }
 
@@ -288,6 +287,7 @@ function drawGameObjects(ctx) {
 
 function initGame() {
 	gameObjects = [];
+	gameOver = false;
 	createEnemies();
 	createHero();
 	keyState = new KeyboardState();
@@ -331,6 +331,12 @@ function initGame() {
 	eventEmitter.on(Messages.KEY_UP_SPACE, () => {
 		keyState.space = false;
 	});
+
+	eventEmitter.on(Messages.KEY_UP_ENTER, () => {
+		if (gameOver) {
+			resetGame();
+		}
+	})
 
 	eventEmitter.on(Messages.COLLISION_ENEMY_LASER, (_, {first, second }) => {
 		first.dead = true;
@@ -413,20 +419,8 @@ function endGame(win) {
 }
 
 function resetGame() {
-	if (gameLoopId) {
-		clearInterval(gameLoopId);
-		eventEmitter.clear();
-		initGame();
-		gameLoopId = setInterval(() => {
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			ctx.fillStyle = 'black';
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			drawPoints();
-			drawLife();
-			updateGameObjects();
-			drawGameObjects(ctx);
-		}, 100);
-	}
+	initGame();
+	window.requestAnimationFrame(gameLoop);
 }
 
 window.onload = async () => {
