@@ -61,7 +61,10 @@ class Hero extends GameObject {
 	canFire() {
 		return this.shotCooldown === 0;
 	}
+
 	decrementLife() {
+		console.log('life lost');
+		
 		this.life--;
 		if (this.life === 0) {
 			this.dead = true;
@@ -219,23 +222,6 @@ function updateGameObjects(secondsPassed) {
 	const enemies = gameObjects.filter((go) => go.type === 'Enemy');
 	const lasers = gameObjects.filter((go) => go.type === 'Laser');
 
-	enemies.forEach((enemy) => {
-		if (enemy.y < canvas.height - enemy.height) {
-			enemy.y += (enemy.speed * secondsPassed);
-		} else {
-			console.log('Stopped at', enemy.y);
-			endGame(false);
-		}
-	});
-
-	lasers.forEach((laser) => {
-		if (laser.y > 0) {
-			laser.y -= (laser.speed * secondsPassed);
-		} else {
-			laser.dead = true;
-		}
-	});
-
 	enemies.forEach((enemy) =>  {
 		const heroRect = hero.rectFromGameObject();
 		if (intersectRect(heroRect, enemy.rectFromGameObject())) {
@@ -255,6 +241,23 @@ function updateGameObjects(secondsPassed) {
 	});
 
 	gameObjects = gameObjects.filter((go) => !go.dead);
+
+	enemies.forEach((enemy) => {
+		if (enemy.y < canvas.height - enemy.height) {
+			enemy.y += (enemy.speed * secondsPassed);
+		} else {
+			console.log('Stopped at', enemy.y);
+			endGame(false);
+		}
+	});
+
+	lasers.forEach((laser) => {
+		if (laser.y > 0) {
+			laser.y -= (laser.speed * secondsPassed);
+		} else {
+			laser.dead = true;
+		}
+	});
 
 	if (keyState.arrowUp) {
 		hero.y -= (hero.speed.y * secondsPassed);
@@ -419,8 +422,10 @@ function endGame(win) {
 }
 
 function resetGame() {
-	initGame();
-	window.requestAnimationFrame(gameLoop);
+	gameObjects = [];
+	gameOver = false;
+	createEnemies();
+	createHero();
 }
 
 window.onload = async () => {
@@ -437,10 +442,9 @@ window.onload = async () => {
 };
 
 function gameLoop(timeStamp) {
+	secondsPassed = (timeStamp - oldTimeStamp) / 1000;
+	oldTimeStamp = timeStamp;
 	if (!gameOver) {
-
-		secondsPassed = (timeStamp - oldTimeStamp) / 1000;
-		oldTimeStamp = timeStamp;
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.fillStyle = 'black';
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -448,6 +452,6 @@ function gameLoop(timeStamp) {
 		drawPoints();
 		drawLife();
 		drawGameObjects(ctx);
-		window.requestAnimationFrame(gameLoop);
 	}
+	window.requestAnimationFrame(gameLoop);
 }
