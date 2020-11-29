@@ -109,6 +109,23 @@ class Laser extends GameObject {
 	}
 }
 
+class Star extends GameObject {
+	constructor(x, y, sprite, speed, opacity) {
+		super(x, y);
+		(this.width = 25), (this.height = 24);
+		this.type = 'Star';
+		this.sprite = sprite;
+		this.speed = speed;
+		this.opacity = opacity;
+	}
+
+	draw(ctx) {
+		ctx.globalAlpha = this.opacity;
+		super.draw(ctx);
+		ctx.globalAlpha = 1.0;
+	}
+}
+
 class KeyboardState {
 	constructor() {
 		this.arrowUp = false;
@@ -155,6 +172,11 @@ let heroImg,
 	enemyImg, 
 	laserImg, 
 	lifeImg,
+	star1Sprite,
+	star2Sprite,
+	star3Sprite,
+	starSpawnCooldown = 0,
+	starCooldownPerSecond = 100,
 	canvas, 
 	ctx, 
 	gameObjects = [], 
@@ -164,7 +186,8 @@ let heroImg,
 	keyState,
 	gameOver = false,
 	secondsPassed = 0,
-	oldTimeStamp = 0;
+	oldTimeStamp = 0,
+	spriteSheet;
 
 // EVENTS
 let onKeyDown = function (e) {
@@ -232,9 +255,73 @@ function createHero() {
 	gameObjects.push(hero);
 }
 
+function createRandomStars() {
+	let numStars = getRandomInt(25, 51);
+	for (let i = 0; i < numStars; i++) {
+		let x = getRandomInt(0, canvas.width);
+		let y = getRandomInt(0, canvas.height);
+		let variant = getRandomInt(1, 4);
+		let opacity = getRandomInt(10, 51) / 100;
+		let newStar;
+		switch (variant) {
+			case 1:
+				newStar = new Star(x, y, star1Sprite, 0, opacity);
+				break;
+			case 2:
+				newStar = new Star(x, y, star2Sprite, 0, opacity);
+				break;
+			case 3:
+				newStar = new Star(x, y, star3Sprite, 0, opacity);
+				break;
+			default:
+				break;
+		}
+		gameObjects.unshift(newStar);
+	}
+}
+
+function getRandomInt(min, max) {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+}
+
 function updateGameObjects(secondsPassed) {
 	const enemies = gameObjects.filter((go) => go.type === 'Enemy');
 	const lasers = gameObjects.filter((go) => go.type === 'Laser');
+	const stars = gameObjects.filter((go) => go.type === 'Star');
+
+	if (starSpawnCooldown === 0) {
+		let variant = getRandomInt(1, 4);
+		let speed = getRandomInt(25, 51);
+		let xPos = getRandomInt(0, canvas.width);
+		let opacity = getRandomInt(10, 51) / 100;
+		let newStar;
+		switch (variant) {
+			case 1:
+				newStar = new Star(xPos, 0, star1Sprite, speed, opacity);
+				break;
+			case 2:
+				newStar = new Star(xPos, 0, star2Sprite, speed, opacity);
+				break;
+			case 3:
+				newStar = new Star(xPos, 0, star3Sprite, speed, opacity);
+				break;
+			default:
+				break;
+		}
+
+		gameObjects.unshift(newStar);
+		starSpawnCooldown = getRandomInt(50, 201);
+	}
+
+	stars.forEach((star) => {
+		if (star.y < canvas.height - star.height) {
+			star.y += (star.speed * secondsPassed);
+		} else {
+			star.dead = true;
+		}
+	})
 
 	enemies.forEach((enemy) =>  {
 		const heroRect = hero.rectFromGameObject();
@@ -296,6 +383,14 @@ function updateGameObjects(secondsPassed) {
 	if (hero.shotCooldown < 0) {
 		hero.shotCooldown = 0;
 	}
+
+	if (starSpawnCooldown > 0) {
+		starSpawnCooldown -= (starCooldownPerSecond * secondsPassed);
+	}
+
+	if (starSpawnCooldown < 0) {
+		starSpawnCooldown = 0;
+	}
 }
 
 function drawGameObjects(ctx) {
@@ -305,6 +400,7 @@ function drawGameObjects(ctx) {
 function initGame() {
 	gameObjects = [];
 	gameOver = false;
+	createRandomStars();
 	createEnemies();
 	createHero();
 	keyState = new KeyboardState();
@@ -438,6 +534,7 @@ function endGame(win) {
 function resetGame() {
 	gameObjects = [];
 	gameOver = false;
+	createRandomStars();
 	createEnemies();
 	createHero();
 }
@@ -447,16 +544,22 @@ let spriteDefs = {
 	"playerShip1_red":			{"x":224,"y":832,"w":99,"h":75},
 	"laserRed01":			{"x":858,"y":230,"w":9,"h":54},
 	"playerLife1_red":			{"x":775,"y":301,"w":33,"h":26},
+	"star1":			{"x":628,"y":681,"w":25,"h":24},
+	"star2":			{"x":222,"y":84,"w":25,"h":24},
+	"star3":			{"x":576,"y":300,"w":24,"h":24},
 }
 
 window.onload = async () => {
 	canvas = document.getElementById('canvas');
 	ctx = canvas.getContext('2d');
-	let spriteSheet = await loadTexture('./assets/Spritesheet/sheet.png')
+	spriteSheet = await loadTexture('./assets/Spritesheet/sheet.png')
 	heroImg = new Sprite(spriteSheet, spriteDefs.playerShip1_red);
 	enemyImg = new Sprite(spriteSheet, spriteDefs.enemyGreen1);
 	laserImg = new Sprite(spriteSheet, spriteDefs.laserRed01);
 	lifeImg = new Sprite(spriteSheet, spriteDefs.playerLife1_red);
+	star1Sprite = new Sprite(spriteSheet, spriteDefs.star1);
+	star2Sprite = new Sprite(spriteSheet, spriteDefs.star2);
+	star3Sprite = new Sprite(spriteSheet, spriteDefs.star3);
 
 	initGame();
 
