@@ -18,7 +18,7 @@ class EventEmitter {
 }
 
 class Sprite {
-	constructor(spriteSheet, x, y, w, h) {
+	constructor(spriteSheet, {x, y, w, h}) {
 		this.spriteSheet = spriteSheet;
 		this.x = x;
 		this.y = y;
@@ -165,11 +165,6 @@ let heroImg,
 	gameOver = false,
 	secondsPassed = 0,
 	oldTimeStamp = 0;
-
-const spriteDefs = fetch('./assets/Spritesheet/sheet.json')
-	.then(response => {
-		return response.json();
-	});
 
 // EVENTS
 let onKeyDown = function (e) {
@@ -394,7 +389,7 @@ function initGame() {
 function drawLife() {
 	const START_POS = canvas.width - 180;
 	for (let i = 0; i < hero.life; i++) {
-		ctx.drawImage(lifeImg, START_POS + 45 * (i + 1), canvas.height - 37);
+		lifeImg.draw(ctx, START_POS + 45 * (i + 1), canvas.height-37, 40, 30);
 	}
 }
 
@@ -447,14 +442,21 @@ function resetGame() {
 	createHero();
 }
 
+let spriteDefs = {
+	"enemyGreen1":			{"x":425,"y":552,"w":93,"h":84},
+	"playerShip1_red":			{"x":224,"y":832,"w":99,"h":75},
+	"laserRed01":			{"x":858,"y":230,"w":9,"h":54},
+	"playerLife1_red":			{"x":775,"y":301,"w":33,"h":26},
+}
+
 window.onload = async () => {
 	canvas = document.getElementById('canvas');
 	ctx = canvas.getContext('2d');
 	let spriteSheet = await loadTexture('./assets/Spritesheet/sheet.png')
-	heroImg = new Sprite(spriteSheet, 224, 832, 99, 75);
-	enemyImg = new Sprite(spriteSheet, 425, 552, 93, 84);
-	laserImg = new Sprite(spriteSheet, 858, 230, 9, 54);
-	lifeImg = await loadTexture('./assets/life.png');
+	heroImg = new Sprite(spriteSheet, spriteDefs.playerShip1_red);
+	enemyImg = new Sprite(spriteSheet, spriteDefs.enemyGreen1);
+	laserImg = new Sprite(spriteSheet, spriteDefs.laserRed01);
+	lifeImg = new Sprite(spriteSheet, spriteDefs.playerLife1_red);
 
 	initGame();
 
