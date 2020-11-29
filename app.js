@@ -17,6 +17,20 @@ class EventEmitter {
 	}
 }
 
+class Sprite {
+	constructor(spriteSheet, x, y, w, h) {
+		this.spriteSheet = spriteSheet;
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+	}
+
+	draw(ctx, x, y, w, h) {
+		ctx.drawImage(this.spriteSheet, this.x, this.y, this.w, this.h, x, y, w, h);
+	}
+}
+
 class GameObject { 
 	constructor(x, y) {
 		this.x = x;
@@ -25,11 +39,11 @@ class GameObject {
 		this.type = "";
 		this.width = 0;
 		this.height = 0;
-		this.img = undefined;
+		this.sprite = undefined;
 	}
 
 	draw(ctx) {
-		ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+		this.sprite.draw(ctx, this.x, this.y, this.width, this.height);
 	}
 	rectFromGameObject() {
 		return {
@@ -79,7 +93,7 @@ class Hero extends GameObject {
 class Enemy extends GameObject {
 	constructor(x, y) {
 		super(x, y);
-		(this.width = 98), (this.height = 50);
+		(this.width = 75), (this.height = 60);
 		this.type = 'Enemy';
 		this.speed = 25;
 	}
@@ -90,7 +104,7 @@ class Laser extends GameObject {
 		super(x, y);
 		(this.width = 9), (this.height = 33);
 		this.type = 'Laser';
-		this.img = laserImg;
+		this.sprite = laserImg;
 		this.speed = 500;
 	}
 }
@@ -152,6 +166,11 @@ let heroImg,
 	secondsPassed = 0,
 	oldTimeStamp = 0;
 
+const spriteDefs = fetch('./assets/Spritesheet/sheet.json')
+	.then(response => {
+		return response.json();
+	});
+
 // EVENTS
 let onKeyDown = function (e) {
 	//console.log(e.keyCode);
@@ -204,9 +223,9 @@ function createEnemies() {
 	const STOP_X = START_X + MONSTER_WIDTH;
 
 	for (let x = START_X; x < STOP_X; x += 98) {
-		for (let y = 0; y < 50 * 5; y += 50) {
+		for (let y = 0; y < 60 * 5; y += 60) {
 			const enemy = new Enemy(x, y);
-			enemy.img = enemyImg;
+			enemy.sprite = enemyImg;
 			gameObjects.push(enemy);
 		}
 	}
@@ -214,7 +233,7 @@ function createEnemies() {
 
 function createHero() {
 	hero = new Hero(canvas.width / 2 - 45, canvas.height - canvas.height / 4);
-	hero.img = heroImg;
+	hero.sprite = heroImg;
 	gameObjects.push(hero);
 }
 
@@ -431,9 +450,10 @@ function resetGame() {
 window.onload = async () => {
 	canvas = document.getElementById('canvas');
 	ctx = canvas.getContext('2d');
-	heroImg = await loadTexture('./assets/player.png');
-	enemyImg = await loadTexture('./assets/enemyShip.png');
-	laserImg = await loadTexture('./assets/laserRed.png');
+	let spriteSheet = await loadTexture('./assets/Spritesheet/sheet.png')
+	heroImg = new Sprite(spriteSheet, 224, 832, 99, 75);
+	enemyImg = new Sprite(spriteSheet, 425, 552, 93, 84);
+	laserImg = new Sprite(spriteSheet, 858, 230, 9, 54);
 	lifeImg = await loadTexture('./assets/life.png');
 
 	initGame();
